@@ -7,3 +7,7 @@ find_package(Imagine REQUIRED)
 project(MOPSI)
 add_executable(MOPSI main.cpp Tools.h Tools.cpp)
 ImagineUseModules(MOPSI Graphics)
+ImagineUseModules(MOPSI LinAlg)
+ImagineUseModules(MOPSI Common)
+ImagineUseModules(MOPSI Images)
+
