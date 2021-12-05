@@ -54,7 +54,7 @@ Imagine::Matrix<double> FromVectorToMatrix(Imagine::FVector<double,8> h){
     for(int i=0;i<3;i++){
         for(int j=0;j<3;j++){
             if(i==2 && j ==2) H(i,j) = 1;
-            else H(i,j) = h[i+3*j];
+            else H(i,j) = h[i+j*3];
         }
     }
     return H;
@@ -129,19 +129,19 @@ int* FindExtremum(int w, int h, Imagine::IntPoint2* Coords){
 void MakeNewImage(Imagine::Image<Imagine::Color> Img1, Imagine::Image<Imagine::Color> Img2, Imagine::Matrix<double> H, int w1, int h1,int w2,int h2){
     Imagine::IntPoint2* NewCoordsImg1 = NewCoords(w1,h1,H);
     int* extremum = FindExtremum(w1,h1,NewCoordsImg1);
-    int w= std::max(w2,extremum[1])-std::min(0,extremum[0]);
+    int w = std::max(w2,extremum[1])-std::min(0,extremum[0]);
     int h = std::max(h2,extremum[3])-std::min(0,extremum[2]);
+    std::cout << w << std::endl;
+    std::cout << h << std::endl;
     Imagine::Image<Imagine::Color> NewImage(w,h);
 
     for(int j=0;j<w1;j++){
         for(int i=0;i<h1;i++){
-            std::cout<<"l";
             NewImage(NewCoordsImg1[j+i*w1][0]-extremum[0],NewCoordsImg1[j+i*w1][1]-extremum[2]) = Img1(i,j);
         }
     }
     for(int j=0;j<w2;j++){
         for(int i=0;i<h2;i++){
-            std::cout<<"e";
             NewImage(i-extremum[0],j-extremum[2]) = Img2(i,j);
         }
     }
