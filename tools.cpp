@@ -27,9 +27,9 @@ void DisplayImage(Imagine::Image<Imagine::Color> Img, Imagine::Window W, int w, 
 
 }
 
-Imagine::IntPoint2* SelectPoints(Imagine::Window W1, Imagine::Window W2,int nb_points=4){
-    Imagine::IntPoint2* coords = new Imagine::IntPoint2[2*nb_points];
-    for(int i=0;i<nb_points;i++){
+Imagine::IntPoint2* SelectPoints(Imagine::Window W1, Imagine::Window W2){
+    Imagine::IntPoint2* coords = new Imagine::IntPoint2[2*4];
+    for(int i=0;i<4;i++){
         Imagine::setActiveWindow(W1);
         Imagine::getMouse(coords[2*i]);
         Imagine::fillCircle(coords[2*i][0],coords[2*i][1],3,Imagine::RED);
@@ -53,7 +53,7 @@ Imagine::Matrix<double> FromVectorToMatrix(Imagine::FVector<double,8> h){
     for(int i=0;i<3;i++){
         for(int j=0;j<3;j++){
             if(i==2 && j ==2) H(i,j) = 1;
-            else H(i,j) = h[i*3+j];
+            else H(i,j) = h[3*i+j];
         }
     }
     return H;
@@ -61,7 +61,7 @@ Imagine::Matrix<double> FromVectorToMatrix(Imagine::FVector<double,8> h){
 
 Imagine::Matrix<double> FindHomography(Imagine::IntPoint2* SelectedPoints){
     Imagine::FMatrix<double,8,8> A(0.);
-    for(int i = 0; i<4;i++){
+    for(int i=0;i<4;i++){
         for(int j=0;j<3;j++){
             A(2*i,3+j) = 0;
             A(2*i+1,j) = 0;
@@ -72,8 +72,8 @@ Imagine::Matrix<double> FindHomography(Imagine::IntPoint2* SelectedPoints){
         A(2*i,1) = SelectedPoints[2*i][1];
         A(2*i,6) = -SelectedPoints[2*i][0]*SelectedPoints[2*i+1][0];
         A(2*i,7) = -SelectedPoints[2*i][1]*SelectedPoints[2*i+1][0];
-        A(2*i+1,3) = SelectedPoints[2*i+1][0];
-        A(2*i+1,4) = SelectedPoints[2*i+1][1];
+        A(2*i+1,3) = SelectedPoints[2*i][0];
+        A(2*i+1,4) = SelectedPoints[2*i][1];
         A(2*i+1,6) = -SelectedPoints[2*i+1][1]*SelectedPoints[2*i][0];
         A(2*i+1,7) = -SelectedPoints[2*i+1][1]*SelectedPoints[2*i][1];
     }
@@ -104,28 +104,35 @@ int* FindExtremum(int w, int h, Imagine::IntPoint2* Coords){
     int max_abs = w;
     int min_ord = 0;
     int max_ord = h;
-    int x =0;
-    int y=0;
-
+    int x;
+    int y;
     for(int i=0;i<h;i++){
         for(int j=0;j<w;j++){
             x=Coords[j+i*w][0];
             y=Coords[j+i*w][1];
-            if(x<min_abs) min_abs = x;
-            if(x>max_abs) max_abs = x;
-            if(y<min_ord) min_ord = y;
-            if(y>max_ord) max_ord = y;
+            if(x<min_abs){
+                min_abs = x;
+            }
+            if(x>max_abs){
+                max_abs = x;
+            }
+            if(y<min_ord){
+                min_ord = y;
+            }
+            if(y>max_ord){
+                max_ord = y;
+            }
 
         }
     }
     extremum[0] = min_abs;
     extremum[1] = max_abs;
-    extremum[2]= min_ord;
+    extremum[2] = min_ord;
     extremum[3] = max_ord;
     return extremum;
 }
 
-void MakeNewImage(Imagine::Image<Imagine::Color> Img1, Imagine::Image<Imagine::Color> Img2, Imagine::Matrix<double> H, int w1, int h1,int w2,int h2){
+void MakeNewImage(Imagine::Image<Imagine::Color> Img1, Imagine::Image<Imagine::Color> Img2, Imagine::Matrix<double> H, int w1, int h1,int w2, int h2){
     Imagine::IntPoint2* NewCoordsImg1 = NewCoords(w1,h1,H);
     int* extremum = FindExtremum(w1,h1,NewCoordsImg1);
     int w = std::max(w2,extremum[1])-std::min(0,extremum[0]);
@@ -134,28 +141,16 @@ void MakeNewImage(Imagine::Image<Imagine::Color> Img1, Imagine::Image<Imagine::C
     std::cout << h << std::endl;
     Imagine::Image<Imagine::Color> NewImage(w,h);
 
-<<<<<<< HEAD
-    for(int j=0;j<w1;j++){
-        for(int i=0;i<h1;i++){
-            NewImage(NewCoordsImg1[j+i*w1][0]-extremum[0],NewCoordsImg1[j+i*w1][1]-extremum[2]) = Img1(i,j);
-        }
-    }
-    for(int j=0;j<w2;j++){
-        for(int i=0;i<h2;i++){
-            NewImage(i-extremum[0],j-extremum[2]) = Img2(i,j);
-=======
     for(int x=0;x<w1;x++){
-        for(int y=0;y<h1;y++){
-            if(NewCoordsImg1[x+y*w1][0]-extremum[0]>=0 && NewCoordsImg1[x+y*w1][0]-extremum[0]< w && NewCoordsImg1[x+y*w1][1]-extremum[2] < h && NewCoordsImg1[x+y*w1][1]-extremum[2] >=0){
-            NewImage(NewCoordsImg1[x+y*w1][0]-extremum[0],NewCoordsImg1[x+y*w1][1]-extremum[2]) = Img1(x,y);}
-        }
+        for(int y=0;y<h1;y++)
+            if(NewCoordsImg1[x+y*w1][0]-extremum[0] >= 0 and NewCoordsImg1[x+y*w1][0]-extremum[0] < w and NewCoordsImg1[x+y*w1][1]-extremum[2] >= 0 and NewCoordsImg1[x+y*w1][1]-extremum[2] < h)
+                NewImage(NewCoordsImg1[x+y*w1][0]-extremum[0],NewCoordsImg1[x+y*w1][1]-extremum[2]) = Img1(x,y);
     }
     for(int x=0;x<w2;x++){
-        for(int y=0;y<h2;y++){
+        for(int y=0;y<h2;y++)
             NewImage(x-extremum[0],y-extremum[2]) = Img2(x,y);
->>>>>>> 1e3153835b724038b1fdd8b3a80d8e6214fbd6bb
-        }
     }
+
     Imagine::Window W = Imagine::openWindow(w,h);
     DisplayImage(NewImage,W,w,h);
 };

@@ -8,7 +8,7 @@
 
 Imagine::Image<Imagine::Color> LoadImage(const char* img, int&w, int&h);
 void DisplayImage(Imagine::Image<Imagine::Color> Img, Imagine::Window W, int w, int h);
-Imagine::IntPoint2* SelectPoints(Imagine::Window W1, Imagine::Window W2, int nb_points);
+Imagine::IntPoint2* SelectPoints(Imagine::Window W1, Imagine::Window W2);
 Imagine::Matrix<double> FromVectorToMatrix(Imagine::FVector<double,8> h);
 Imagine::Matrix<double> FindHomography(Imagine::IntPoint2* SelectedPoints);
 Imagine::IntPoint2 Homography(Imagine::IntPoint2 x1, Imagine::Matrix<double> H);
