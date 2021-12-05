@@ -27,9 +27,9 @@ void DisplayImage(Imagine::Image<Imagine::Color> Img, Imagine::Window W, int w, 
 
 }
 
-Imagine::IntPoint2* SelectPoints(Imagine::Window W1, Imagine::Window W2,int nb_points){
+Imagine::IntPoint2* SelectPoints(Imagine::Window W1, Imagine::Window W2,int nb_points=4){
     Imagine::IntPoint2* coords = new Imagine::IntPoint2[2*nb_points];
-    for(int i=0;i<4;i++){
+    for(int i=0;i<nb_points;i++){
         Imagine::setActiveWindow(W1);
         Imagine::getMouse(coords[2*i]);
         Imagine::fillCircle(coords[2*i][0],coords[2*i][1],3,Imagine::RED);
@@ -42,7 +42,7 @@ Imagine::IntPoint2* SelectPoints(Imagine::Window W1, Imagine::Window W2,int nb_p
 
 Imagine::IntPoint2 Homography(Imagine::IntPoint2 p, Imagine::Matrix<double> H){
     Imagine::IntPoint2 new_point;
-    float denum = H(2,0)*p[0]+H(2,1)*p[1]+1;
+    float denum = H(2,0)*p[0]+H(2,1)*p[1]+1.;
     new_point[0]= int((H(0,0)*p[0]+H(0,1)*p[1]+H(0,2))/denum);
     new_point[1]= int((H(1,0)*p[0]+H(1,1)*p[1]+H(1,2))/denum);
     return new_point;
@@ -50,11 +50,10 @@ Imagine::IntPoint2 Homography(Imagine::IntPoint2 p, Imagine::Matrix<double> H){
 
 Imagine::Matrix<double> FromVectorToMatrix(Imagine::FVector<double,8> h){
     Imagine::Matrix<double> H(3,3);
-    H(2,2)=1;
     for(int i=0;i<3;i++){
         for(int j=0;j<3;j++){
             if(i==2 && j ==2) H(i,j) = 1;
-            else H(i,j) = h[i+j*3];
+            else H(i,j) = h[i*3+j];
         }
     }
     return H;
@@ -135,6 +134,7 @@ void MakeNewImage(Imagine::Image<Imagine::Color> Img1, Imagine::Image<Imagine::C
     std::cout << h << std::endl;
     Imagine::Image<Imagine::Color> NewImage(w,h);
 
+<<<<<<< HEAD
     for(int j=0;j<w1;j++){
         for(int i=0;i<h1;i++){
             NewImage(NewCoordsImg1[j+i*w1][0]-extremum[0],NewCoordsImg1[j+i*w1][1]-extremum[2]) = Img1(i,j);
@@ -143,6 +143,17 @@ void MakeNewImage(Imagine::Image<Imagine::Color> Img1, Imagine::Image<Imagine::C
     for(int j=0;j<w2;j++){
         for(int i=0;i<h2;i++){
             NewImage(i-extremum[0],j-extremum[2]) = Img2(i,j);
+=======
+    for(int x=0;x<w1;x++){
+        for(int y=0;y<h1;y++){
+            if(NewCoordsImg1[x+y*w1][0]-extremum[0]>=0 && NewCoordsImg1[x+y*w1][0]-extremum[0]< w && NewCoordsImg1[x+y*w1][1]-extremum[2] < h && NewCoordsImg1[x+y*w1][1]-extremum[2] >=0){
+            NewImage(NewCoordsImg1[x+y*w1][0]-extremum[0],NewCoordsImg1[x+y*w1][1]-extremum[2]) = Img1(x,y);}
+        }
+    }
+    for(int x=0;x<w2;x++){
+        for(int y=0;y<h2;y++){
+            NewImage(x-extremum[0],y-extremum[2]) = Img2(x,y);
+>>>>>>> 1e3153835b724038b1fdd8b3a80d8e6214fbd6bb
         }
     }
     Imagine::Window W = Imagine::openWindow(w,h);
