@@ -160,23 +160,23 @@ float Radius(int x, int y, int xc, int yc){
     return sqrt(pow((x-xc),2) + pow((y-yc),2));
 }
 
-Imagine::Matrix<std::tuple<int, int>> DeformationMatrix(int w, int h, float k1, float k2){
-    Imagine::Matrix<std::tuple<int, int>> H(w,h);
+Imagine::Matrix<Imagine::IntPoint2> DeformationMatrix(int w, int h, float k1, float k2){
+    Imagine::Matrix<Imagine::IntPoint2> H(w,h);
     for(int i=0;i<w;i++){
         for(int j=0;j<h;j++){
             float Factor = (1 + k1 * pow(Radius(i,j,w/2,h/2),2) + k2 * pow(Radius(i,j,w/2,h/2),4));
-            H(i,j) = std::make_tuple(int(Factor*(i-w/2) + w/2), int(Factor*(j-h/2) + h/2));
+            H(i,j) = {int(Factor*(i-w/2) + w/2), int(Factor*(j-h/2) + h/2)};
         }
     }
     return H;
 }
 
 void InverseDeformation(int w, int h, int k1, int k2, Imagine::IntPoint2 Deformation_Points[4], Imagine::IntPoint2 Deformation_Cancel[4]){
-    Imagine::Matrix<std::tuple<int,int>> Deformation = DeformationMatrix(w,h,k1,k2);
+    Imagine::Matrix<Imagine::IntPoint2> Deformation = DeformationMatrix(w,h,k1,k2);
     for(int k=0;k<4;k++){
         for(int i=0;i<w;i++){
             for(int j=0;j<h;j++){
-                if(int(std::get<0>(Deformation(i,j))) == Deformation_Points[k][0] and int(std::get<1>(Deformation(i,j))) == Deformation_Points[k][1])
+                if(int(Deformation(i,j)[0]) == Deformation_Points[k][0] and int(Deformation(i,j)[1]) == Deformation_Points[k][1])
                     Deformation_Cancel[k] = {i,j};
             }
         }
@@ -250,4 +250,3 @@ void GradientDescent(Imagine::IntPoint2 SelectedPoints[2*4], int w, int h, float
     }
 
 };
-
