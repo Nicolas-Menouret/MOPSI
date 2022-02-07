@@ -185,13 +185,12 @@ void InverseDeformation(int w, int h, int k1, int k2, Imagine::IntPoint2 Deforma
 
 float Energy(Imagine::IntPoint2 SelectedPoints[2*4], Imagine::IntPoint2 Deformation_Cancel_1[4], int w, int h, float lambda, float mu, float k1, float k2, Imagine::Matrix<double> H){
     Imagine::IntPoint2 Deformation_Cancel_2[4];
-    int w_homography, h_homography;
-    Imagine::IntPoint2 center_homography;
     for(int i=0;i<4;i++)
         Deformation_Cancel_2[i] = Homography(Deformation_Cancel_1[i], H);
-    center_homography = Homography({w, h}, H);
-    w_homography = center_homography[0];
-    h_homography = center_homography[1];
+
+    Imagine::IntPoint2 center_homography = Homography({w, h}, H);
+    float w_homography = center_homography[0];
+    float h_homography = center_homography[1];
 
     Imagine::IntPoint2 Deformation_Points_2[4];
     for(int i=0; i<4; i++){
@@ -205,48 +204,32 @@ float Energy(Imagine::IntPoint2 SelectedPoints[2*4], Imagine::IntPoint2 Deformat
     return dist + lambda * pow(k1,2) + mu * pow(k2,2);
 }
 
-float EnergyDerivativeApprox(Imagine::IntPoint2 SelectedPoints[2*4], Imagine::IntPoint2 Deformation_Cancel_1[4], int w, int h, float lambda, float mu, float k1, float k2, Imagine::Matrix<double> H, float epsilon){
-    Imagine::Matrix<double> H_epsilon(3,3);
-    for(int i=0;i<3;i++){
-        for(int j=0;j<2;j++)
-            H_epsilon(i,j) = H(i,j) + epsilon;
-    }
-    return (Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1+epsilon,k2+epsilon,H_epsilon) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H))/epsilon;
-}
+void GradientDescent(Imagine::IntPoint2 SelectedPoints[2*4], int w, int h, float lambda, float mu, int& k1, int& k2, Imagine::Matrix<double>& H, float epsilon, int n_iterations, float speed){
+    int k1_prime = k1;
+    int k2_prime = k2;
+    Imagine::Matrix<double> H_prime = H;
 
-void GradientDescent(Imagine::IntPoint2 SelectedPoints[2*4], int w, int h, float lambda, float mu, int& k1, int& k2, Imagine::Matrix<double>& H, float epsilon, float accuracy){
-    int k1_prime = k1 + 1;
-    int k2_prime = k2 + 1;
-    Imagine::Matrix<double> H_prime(3,3);
-    for(int i=0;i<3;i++){
-        for(int j=0;j<2;j++)
-            H_prime(i,j) = H(i,j) + 1;
-    }
+    int n = 0;
+    while(n < n_iterations){
+        n += 1;
+        Imagine::IntPoint2 Deformation_Points_1[4] = {SelectedPoints[0], SelectedPoints[2], SelectedPoints[4], SelectedPoints[6]};
+        Imagine::IntPoint2 Deformation_Cancel_1[4];
+        InverseDeformation(w,h,k1,k2,Deformation_Points_1,Deformation_Cancel_1);
 
-    Imagine::IntPoint2 Deformation_Points_1[4] = {SelectedPoints[0], SelectedPoints[2], SelectedPoints[4], SelectedPoints[6]};
-    Imagine::IntPoint2 Deformation_Cancel_1[4];
-    InverseDeformation(w,h,k1,k2,Deformation_Points_1,Deformation_Cancel_1);
-
-    while(abs(EnergyDerivativeApprox(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H,epsilon)-EnergyDerivativeApprox(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1_prime,k2_prime,H_prime,epsilon)) > accuracy){
-        float denom = EnergyDerivativeApprox(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H,epsilon)-EnergyDerivativeApprox(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1_prime,k2_prime,H_prime,epsilon);
-        float facteur = -EnergyDerivativeApprox(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1_prime,k2_prime,H_prime,epsilon)/denom;
-        float facteur_prime = EnergyDerivativeApprox(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H,epsilon)/denom;
-
-        float k1_mem = facteur_prime * k1_prime + facteur * k1;
-        float k2_mem = facteur_prime * k2_prime + facteur * k2;
         k1_prime = k1;
         k2_prime = k2;
-        k1 = k1_mem;
-        k2 = k2_mem;
+        H_prime = H;
 
+        k1 -= speed*(Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1+epsilon,k2,H) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H))/epsilon;
+        k2 -= speed*(Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2+epsilon,H) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H))/epsilon;
+
+        Imagine::Matrix<double> H_epsilon = H;
         for(int i=0;i<3;i++){
             for(int j=0;j<2;j++){
-                float H_mem = facteur_prime * H_prime(i,j) + facteur * H(i,j);
-                H_prime(i,j) = H(i,j);
-                H(i,j) = H_mem;
+                H_epsilon(i,j) += epsilon;
+                H(i,j) -= speed*(Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H_epsilon) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H_prime))/epsilon;
+                H_epsilon(i,j) -= epsilon;
             }
         }
-
     }
-
 };
