@@ -183,6 +183,52 @@ void InverseDeformation(int w, int h, int k1, int k2, Imagine::IntPoint2 Deforma
     }
 }
 
+Imagine::FMatrix<int,2,1>  Deformation(Imagine::FMatrix<float,2,1>   p, int w, int h,float k1, float k2){
+    Imagine::FMatrix<int,2,1>  p_deformed;
+    Imagine::FMatrix<float,2,1>  c;
+    c[0] = w/2;
+    c[1] = h/2;
+    float Factor = (1 + k1 * pow(Radius(p_deformed[0],p_deformed[1],w/2,h/2),2) + k2 * pow(Radius(p_deformed[0],p_deformed[1],w/2,h/2),4));
+    p_deformed = Factor*(p-c);
+    return p_deformed;
+}
+
+Imagine::FMatrix<float,1,2> Transpose(Imagine::FMatrix<float,2,1> M){
+    Imagine::FMatrix<float,1,2> T;
+    T[0] = M[0];
+    T[1] = M[1];
+    return T;
+}
+
+Imagine::IntPoint2 InverseDeformationQuasiNewton(Imagine::IntPoint2 p, int k1, int k2, int w, int h,float epsilon,float pho){
+    Imagine::FMatrix<float,2,2> B;
+    B = Imagine::FMatrix<float,2,2>::Identity();
+    Imagine::FMatrix<float,2,1>  x;
+    x[0] = p[0];
+    x[1] = p[1];
+    Imagine::FMatrix<float,2,1>  c;
+    c[0] = w/2;
+    c[1] = h/2;
+    Imagine::FMatrix<float,2,1>  x1;
+    x1[0] = p[0];
+    x1[1] = p[1];
+    Imagine::FMatrix<float,2,1>   x2;
+    Imagine::FMatrix<float,2,1>   g;
+    x2 = x1 - pho * Imagine::tmult(B, (x-c)-Deformation(x1,w,h,k1,k2));
+
+    while(Radius(x1[0],x1[1],x2[0],x2[1])>epsilon){
+        Imagine::FMatrix<float,2,1> s = x2 - x1;
+        Imagine::FMatrix<float,2,1> y = Deformation(x2,w,h,k1,k2) - Deformation(x1,w,h,k1,k2);
+        B = B + ((x2 - x1) - B*y)/((Transpose(s)*B*y)[0])*((Transpose(s)*B));
+        x1 = x2;
+        x2 = x1 - pho * Imagine::tmult(B, (x-c)-Deformation(x1,w,h,k1,k2));
+    }
+    Imagine::IntPoint2 inverse;
+    inverse[0] = x2[0];
+    inverse[1] = x2[1];
+    return inverse;
+};
+
 float Energy(Imagine::IntPoint2 SelectedPoints[2*4], Imagine::IntPoint2 Deformation_Cancel_1[4], int w, int h, float lambda, float mu, float k1, float k2, Imagine::Matrix<double> H){
     Imagine::IntPoint2 Deformation_Cancel_2[4];
     for(int i=0;i<4;i++)
