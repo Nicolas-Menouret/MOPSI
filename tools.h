@@ -19,4 +19,7 @@ void InverseDeformation(int w, int h, int k1, int k2, Imagine::IntPoint2 Deforma
 Imagine::Matrix<Imagine::IntPoint2> DeformationMatrix(int w, int h, float k1, float k2);
 float Radius(int x, int y, int xc, int yc);
 float Energy(Imagine::IntPoint2 SelectedPoints[2*4], Imagine::IntPoint2 Deformation_Cancel_1[4], int w, int h, float lambda, float mu, float k1, float k2, Imagine::Matrix<double> H);
-void GradientDescent(Imagine::IntPoint2 SelectedPoints[2*4], int w, int h, float lambda, float mu, int& k1, int& k2, Imagine::Matrix<double>& H, float epsilon, float accuracy);
+float EnergyDerivativeApprox(Imagine::IntPoint2 SelectedPoints[2*4], Imagine::IntPoint2 Deformation_Cancel_1[4], int w, int h, float lambda, float mu, float k1, float k2, Imagine::Matrix<double> H, float epsilon);
+void GradientDescent(Imagine::IntPoint2* SelectedPoints, int w, int h,  int& k1, int& k2, Imagine::Matrix<double>& H,float lambda=0.1, float mu=0.1, float epsilon=0.1, int n_iterations=100, float speed=0.1);
+void MakeNewImage2(Imagine::Image<Imagine::Color> Img1, Imagine::Image<Imagine::Color> Img2, Imagine::Matrix<double> H, int w1, int h1, int w2, int h2, int k1, int k2);
+
