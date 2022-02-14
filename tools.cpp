@@ -187,13 +187,13 @@ void InverseDeformation(int w, int h, int k1, int k2, Imagine::IntPoint2 Deforma
     }
 }
 
-Imagine::FMatrix<int,2,1>  Deformation(Imagine::FMatrix<float,2,1>   p, int w, int h,float k1, float k2){
+Imagine::FMatrix<int,2,1>  Deformation(Imagine::FMatrix<float,2,1> p, int w, int h,float k1, float k2){
     Imagine::FMatrix<int,2,1>  p_deformed;
     Imagine::FMatrix<float,2,1>  c;
     c[0] = w/2;
     c[1] = h/2;
-    float Factor = (1 + k1 * pow(Radius(p_deformed[0],p_deformed[1],w/2,h/2),2) + k2 * pow(Radius(p_deformed[0],p_deformed[1],w/2,h/2),4));
-    p_deformed = Factor*(p-c);
+    float Factor = (1 + k1 * pow(Radius(p[0],p[1],w/2,h/2),2) + k2 * pow(Radius(p[0],p[1],w/2,h/2),4));
+    p_deformed = Factor*(p-c) + c;
     return p_deformed;
 }
 
@@ -204,7 +204,7 @@ Imagine::FMatrix<float,1,2> Transpose(Imagine::FMatrix<float,2,1> M){
     return T;
 }
 
-Imagine::IntPoint2 InverseDeformationQuasiNewton(Imagine::IntPoint2 p, int k1, int k2, int w, int h,float epsilon = 0.01 ,float pho = 0.1){
+Imagine::IntPoint2 InverseDeformationQuasiNewton(Imagine::IntPoint2 p, float k1, float k2, int w, int h,float epsilon = 0.01 ,float pho = 0.1){
     Imagine::FMatrix<float,2,2> B;
     B = Imagine::FMatrix<float,2,2>::Identity();
     Imagine::FMatrix<float,2,1>  x;
@@ -218,7 +218,7 @@ Imagine::IntPoint2 InverseDeformationQuasiNewton(Imagine::IntPoint2 p, int k1, i
     x1[1] = p[1];
     Imagine::FMatrix<float,2,1>   x2;
     Imagine::FMatrix<float,2,1>   g;
-    x2 = x1 - pho * Imagine::tmult(B, (x-c)-Deformation(x1,w,h,k1,k2));
+    x2 = x1 - pho * Imagine::tmult(B, x-Deformation(x1,w,h,k1,k2));
 
     while(Radius(x1[0],x1[1],x2[0],x2[1])>epsilon){
         Imagine::FMatrix<float,2,1> s = x2 - x1;
