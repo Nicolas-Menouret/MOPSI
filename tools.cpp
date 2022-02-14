@@ -187,7 +187,7 @@ void InverseDeformation(int w, int h, int k1, int k2, Imagine::IntPoint2 Deforma
     }
 }
 
-Imagine::FMatrix<int,2,1>  Deformation(Imagine::FMatrix<float,2,1> p, int w, int h,float k1, float k2){
+Imagine::FMatrix<float,2,1>  Deformation(Imagine::FMatrix<float,2,1>   p, int w, int h,float k1, float k2){
     Imagine::FMatrix<int,2,1>  p_deformed;
     Imagine::FMatrix<float,2,1>  c;
     c[0] = w/2;
@@ -204,9 +204,11 @@ Imagine::FMatrix<float,1,2> Transpose(Imagine::FMatrix<float,2,1> M){
     return T;
 }
 
-Imagine::IntPoint2 InverseDeformationQuasiNewton(Imagine::IntPoint2 p, float k1, float k2, int w, int h,float epsilon = 0.01 ,float pho = 0.1){
+Imagine::IntPoint2 InverseDeformationQuasiNewton(Imagine::IntPoint2 p, float k1, float k2, int w, int h,float epsilon ){
     Imagine::FMatrix<float,2,2> B;
     B = Imagine::FMatrix<float,2,2>::Identity();
+    Imagine::FMatrix<float,2,2> B_invert;
+    B_invert = Imagine::FMatrix<float,2,2>::Identity();
     Imagine::FMatrix<float,2,1>  x;
     x[0] = p[0];
     x[1] = p[1];
@@ -214,22 +216,25 @@ Imagine::IntPoint2 InverseDeformationQuasiNewton(Imagine::IntPoint2 p, float k1,
     c[0] = w/2;
     c[1] = h/2;
     Imagine::FMatrix<float,2,1>  x1;
-    x1[0] = p[0];
-    x1[1] = p[1];
+    x1[0] = x[0];
+    x1[1] = x[1];
     Imagine::FMatrix<float,2,1>   x2;
     Imagine::FMatrix<float,2,1>   g;
-    x2 = x1 - pho * Imagine::tmult(B, x-Deformation(x1,w,h,k1,k2));
-
+    x2[0] = x[0] + 4;
+    x2[1] = x[0] + 4;
     while(Radius(x1[0],x1[1],x2[0],x2[1])>epsilon){
+        std::cout << x1 << std::endl;
+        std::cout << x2 << std::endl;
         Imagine::FMatrix<float,2,1> s = x2 - x1;
-        Imagine::FMatrix<float,2,1> y = Deformation(x2,w,h,k1,k2) - Deformation(x1,w,h,k1,k2);
-        B = B + ((x2 - x1) - B*y)/((Transpose(s)*B*y)[0])*((Transpose(s)*B));
+        Imagine::FMatrix<float,2,1> y = -Deformation(x2,w,h,k1,k2) + Deformation(x1,w,h,k1,k2);
+        B = B + (y - B*s)/((Transpose(s)*s)[0])*(Transpose(s));
+        B_invert = B_invert + (s - B_invert * y)/((Transpose(s)*B_invert*y)[0])*Transpose(s)*B_invert;
         x1 = x2;
-        x2 = x1 - pho * Imagine::tmult(B, (x-c)-Deformation(x1,w,h,k1,k2));
+        x2 = x1 - B_invert*(x-Deformation(x1,w,h,k1,k2));
     }
     Imagine::IntPoint2 inverse;
-    inverse[0] = x2[0];
-    inverse[1] = x2[1];
+    inverse[0] = int(x2[0]+0.5);
+    inverse[1] = int(x2[1]+0.5);
     return inverse;
 };
 
