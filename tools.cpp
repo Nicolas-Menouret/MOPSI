@@ -30,9 +30,9 @@ void DisplayImage(Imagine::Image<Imagine::Color> Img, Imagine::Window W, int w, 
 
 }
 
-Imagine::IntPoint2* SelectPoints(Imagine::Window W1, Imagine::Window W2){
-    Imagine::IntPoint2* coords = new Imagine::IntPoint2[2*4];
-    for(int i=0;i<4;i++){
+Imagine::IntPoint2* SelectPoints(Imagine::Window W1, Imagine::Window W2,int n_points){
+    Imagine::IntPoint2* coords = new Imagine::IntPoint2[2*n_points];
+    for(int i=0;i<n_points;i++){
         Imagine::setActiveWindow(W1);
         Imagine::getMouse(coords[2*i]);
         Imagine::fillCircle(coords[2*i][0],coords[2*i][1],3,Imagine::RED);
@@ -45,7 +45,7 @@ Imagine::IntPoint2* SelectPoints(Imagine::Window W1, Imagine::Window W2){
 
 Imagine::IntPoint2 Homography(Imagine::IntPoint2 p, Imagine::Matrix<double> H){
     Imagine::IntPoint2 new_point;
-    float denum = H(2,0)*p[0]+H(2,1)*p[1]+1.;
+    double denum = H(2,0)*p[0]+H(2,1)*p[1]+1.;
     new_point[0]= int((H(0,0)*p[0]+H(0,1)*p[1]+H(0,2))/denum);
     new_point[1]= int((H(1,0)*p[0]+H(1,1)*p[1]+H(1,2))/denum);
     return new_point;
@@ -160,48 +160,48 @@ void MakeNewImage(Imagine::Image<Imagine::Color> Img1, Imagine::Image<Imagine::C
 
 //DEFORMATION
 
-float Radius(int x, int y, int xc, int yc){
+double Radius(int x, int y, int xc, int yc){
     return sqrt(pow((x-xc),2) + pow((y-yc),2));
 }
 
-Imagine::FMatrix<float,2,1>  Deformation(Imagine::FMatrix<float,2,1> p, int w, int h,float k1, float k2){
+Imagine::FMatrix<double,2,1>  Deformation(Imagine::FMatrix<double,2,1> p, int w, int h,double k1, double k2){
     Imagine::FMatrix<int,2,1>  p_deformed;
-    Imagine::FMatrix<float,2,1>  c;
+    Imagine::FMatrix<double,2,1>  c;
     c[0] = w/2;
     c[1] = h/2;
-    float Factor = (1 + k1 * pow(Radius(p[0],p[1],w/2,h/2),2) + k2 * pow(Radius(p[0],p[1],w/2,h/2),4));
+    double Factor = (1 + k1 * pow(Radius(p[0],p[1],w/2,h/2),2) + k2 * pow(Radius(p[0],p[1],w/2,h/2),4));
     p_deformed = Factor*(p-c) + c;
     return p_deformed;
 }
 
-Imagine::FMatrix<float,1,2> Transpose(Imagine::FMatrix<float,2,1> M){
-    Imagine::FMatrix<float,1,2> T;
+Imagine::FMatrix<double,1,2> Transpose(Imagine::FMatrix<double,2,1> M){
+    Imagine::FMatrix<double,1,2> T;
     T[0] = M[0];
     T[1] = M[1];
     return T;
 }
 
-Imagine::IntPoint2 InverseDeformationQuasiNewton(Imagine::IntPoint2 p, float k1, float k2, int w, int h, float epsilon){
-    Imagine::FMatrix<float,2,2> B;
-    B = Imagine::FMatrix<float,2,2>::Identity();
-    Imagine::FMatrix<float,2,2> B_invert;
-    B_invert = Imagine::FMatrix<float,2,2>::Identity();
-    Imagine::FMatrix<float,2,1>  x;
+Imagine::IntPoint2 InverseDeformationQuasiNewton(Imagine::IntPoint2 p, double k1, double k2, int w, int h, double epsilon){
+    Imagine::FMatrix<double,2,2> B;
+    B = Imagine::FMatrix<double,2,2>::Identity();
+    Imagine::FMatrix<double,2,2> B_invert;
+    B_invert = Imagine::FMatrix<double,2,2>::Identity();
+    Imagine::FMatrix<double,2,1>  x;
     x[0] = p[0];
     x[1] = p[1];
-    Imagine::FMatrix<float,2,1>  c;
+    Imagine::FMatrix<double,2,1>  c;
     c[0] = w/2;
     c[1] = h/2;
-    Imagine::FMatrix<float,2,1>  x1;
+    Imagine::FMatrix<double,2,1>  x1;
     x1[0] = x[0];
     x1[1] = x[1];
-    Imagine::FMatrix<float,2,1>   x2;
-    Imagine::FMatrix<float,2,1>   g;
+    Imagine::FMatrix<double,2,1>   x2;
+    Imagine::FMatrix<double,2,1>   g;
     x2[0] = x[0] + 4;
     x2[1] = x[0] + 4;
     while(Radius(x1[0],x1[1],x2[0],x2[1])>epsilon){
-        Imagine::FMatrix<float,2,1> s = x2 - x1;
-        Imagine::FMatrix<float,2,1> y = -Deformation(x2,w,h,k1,k2) + Deformation(x1,w,h,k1,k2);
+        Imagine::FMatrix<double,2,1> s = x2 - x1;
+        Imagine::FMatrix<double,2,1> y = -Deformation(x2,w,h,k1,k2) + Deformation(x1,w,h,k1,k2);
         B = B + (y - B*s)/((Transpose(s)*s)[0])*(Transpose(s));
         B_invert = B_invert + (s - B_invert * y)/((Transpose(s)*B_invert*y)[0])*Transpose(s)*B_invert;
         x1 = x2;
@@ -213,7 +213,7 @@ Imagine::IntPoint2 InverseDeformationQuasiNewton(Imagine::IntPoint2 p, float k1,
     return inverse;
 };
 
-Imagine::IntPoint2* NoDeformationImage(int w, int h, float k1, float k2){
+Imagine::IntPoint2* NoDeformationImage(int w, int h, double k1, double k2){
     Imagine::IntPoint2* image_without_deformation = new Imagine::IntPoint2[w*h];
     for(int x=0;x<w;x++){
         for(int y=0;y<h;y++){
@@ -233,52 +233,55 @@ Imagine::IntPoint2* ApplyHomography(Imagine::IntPoint2* NoDeformationImage, int 
     return image_after_homography;
 }
 
-float Energy(Imagine::IntPoint2 SelectedPoints[2*4], Imagine::IntPoint2 Deformation_Cancel_1[4], int w, int h, float lambda, float mu, float k1, float k2, Imagine::Matrix<double> H){
-    Imagine::IntPoint2 Deformation_Cancel_2[4];
-    for(int i=0;i<4;i++)
+double Energy(Imagine::IntPoint2* SelectedPoints, Imagine::IntPoint2* Deformation_Cancel_1, int w, int h, double lambda, double mu, double k1, double k2, Imagine::Matrix<double> H, int n_points){
+    Imagine::IntPoint2* Deformation_Cancel_2 = new Imagine::IntPoint2[n_points];
+    for(int i=0;i<n_points;i++)
         Deformation_Cancel_2[i] = Homography(Deformation_Cancel_1[i], H);
 
     Imagine::IntPoint2 center_homography = Homography({w, h}, H);
-    float w_homography = center_homography[0];
-    float h_homography = center_homography[1];
+    double w_homography = center_homography[0];
+    double h_homography = center_homography[1];
 
-    Imagine::IntPoint2 Deformation_Points_2[4];
-    for(int i=0;i<4;i++){
-        float r = Radius(Deformation_Cancel_2[i][0], Deformation_Cancel_2[i][1], w_homography/2, h_homography/2);
-        Deformation_Points_2[i] = {int((1 + k1*pow(r,2) + k2*pow(r,4))*(Deformation_Cancel_2[i][0]-w_homography) + w_homography), int((1 + k1*pow(r,2) + k2*pow(r,4))*(Deformation_Cancel_2[i][1]-h_homography) + h_homography)};
+
+    Imagine::IntPoint2* Deformation_Points_2 = new Imagine::IntPoint2[n_points];
+    for(int i=0;i<n_points;i++){
+        double r = Radius(Deformation_Cancel_2[i][0], Deformation_Cancel_2[i][1], w_homography/2, h_homography/2);
+        Deformation_Points_2[i] = {int((1 + k1*pow(r,2) + k2*pow(r,4))*(Deformation_Cancel_2[i][0]-w_homography/2) + w_homography/2), int((1 + k1*pow(r,2) + k2*pow(r,4))*(Deformation_Cancel_2[i][1]-h_homography/2) + h_homography/2)};
     }
 
-    float dist = 0;
-    for(int i=0;i<4;i++)
+    double dist = 0;
+    for(int i=0;i<n_points;i++)
         dist += pow(Deformation_Points_2[i][0] -  SelectedPoints[2*i+1][0],2) + pow(Deformation_Points_2[i][1] - SelectedPoints[2*i+1][1],2);
     return dist + lambda * pow(k1,2) + mu * pow(k2,2);
 }
 
-void GradientDescent(Imagine::IntPoint2* SelectedPoints, int w, int h,  int& k1, int& k2, Imagine::Matrix<double>& H, float lambda, float mu, float epsilon, int n_iterations, float speed){
-    int k1_prime = k1;
-        int k2_prime = k2;
-        Imagine::Matrix<double> H_prime = H;
+void GradientDescent(Imagine::IntPoint2* SelectedPoints, int w, int h,  double& k1, double& k2, Imagine::Matrix<double>& H, int n_points, double lambda, double mu, double epsilon, int n_iterations, double speed){
+    double k1_prime = k1;
+    double k2_prime = k2;
+    Imagine::Matrix<double> H_prime = H;
 
-        int n = 0;
-        while(n < n_iterations){
-            n += 1;
-            Imagine::IntPoint2 Deformation_Points_1[4] = {SelectedPoints[0], SelectedPoints[2], SelectedPoints[4], SelectedPoints[6]};
-            Imagine::IntPoint2 Deformation_Cancel_1[4];
-            for(int i=0;i<4;i++)
-                Deformation_Cancel_1[i] = InverseDeformationQuasiNewton(Deformation_Points_1[i],k1,k2,w,h);
+    Imagine::IntPoint2* Deformation_Points_1 = new Imagine::IntPoint2[n_points];
+    for(int i = 0; i < n_points; i++)
+        Deformation_Points_1[i] = SelectedPoints[2*i];
+    Imagine::IntPoint2* Deformation_Cancel_1= new Imagine::IntPoint2[n_points];
+    int n = 0;
+    while(n < n_iterations){
+        n += 1;
+        for(int i=0;i<n_points;i++)
+            Deformation_Cancel_1[i] = InverseDeformationQuasiNewton(Deformation_Points_1[i],k1,k2,w,h);
 
-            k1_prime = k1;
-            k2_prime = k2;
-            H_prime = H;
+        k1_prime = k1;
+        k2_prime = k2;
+        H_prime = H;
 
-            k1 -= speed*(Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1+epsilon,k2,H) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H))/epsilon;
-            k2 -= speed*(Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2+epsilon,H) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H))/epsilon;
-
-            Imagine::Matrix<double> H_epsilon = H;
+        k1 -= speed*(Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1+epsilon,k2,H,n_points) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H,n_points))/epsilon;
+        k2 -= speed*(Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2+epsilon,H,n_points) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H,n_points))/epsilon;
+        std::cout << k1 <<std::endl;
+        Imagine::Matrix<double> H_epsilon = H;
             for(int i=0;i<3;i++){
                 for(int j=0;j<2;j++){
                     H_epsilon(i,j) += epsilon;
-                    H(i,j) -= speed*(Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H_epsilon) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H_prime))/epsilon;
+                    H(i,j) -= speed*(Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H_epsilon,n_points) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H_prime,n_points))/epsilon;
                     H_epsilon(i,j) -= epsilon;
                 }
             }
@@ -286,7 +289,7 @@ void GradientDescent(Imagine::IntPoint2* SelectedPoints, int w, int h,  int& k1,
     };
 
 
-void MakeNewImage2(Imagine::Image<Imagine::Color> Img1, Imagine::Image<Imagine::Color> Img2, Imagine::Matrix<double> H, int w1, int h1, int w2, int h2, int k1, int k2){
+void MakeNewImage2(Imagine::Image<Imagine::Color> Img1, Imagine::Image<Imagine::Color> Img2, Imagine::Matrix<double> H, int w1, int h1, int w2, int h2, double k1, double k2){
     Imagine::IntPoint2* NoDeformationImg1 = NoDeformationImage(w1, h1, k1, k2);
     Imagine::IntPoint2* NoDeformationImg2 = NoDeformationImage(w2, h2, k1, k2);
     Imagine::IntPoint2* Img1AfterHomography = ApplyHomography(NoDeformationImg1,w1,h1,H);
