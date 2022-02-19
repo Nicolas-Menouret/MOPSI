@@ -17,8 +17,7 @@ void MakeNewImage(Imagine::Image<Imagine::Color> Img1, Imagine::Image<Imagine::C
 
 double Radius(int x, int y, int xc, int yc);
 double Energy(Imagine::IntPoint2* SelectedPoints, Imagine::IntPoint2* Deformation_Cancel_1, int w, int h, double lambda, double mu, double k1, double k2, Imagine::Matrix<double> H, int n_points = 4);
-void GradientDescent(Imagine::IntPoint2* SelectedPoints, int w, int h,  double& k1, double& k2, Imagine::Matrix<double>& H,int n_points = 4, double lambda=0.1, double mu=0.1, double epsilon=pow(10,-1), int n_iterations=1000, double speed=pow(10,-1));
-
+void GradientDescent(Imagine::IntPoint2* SelectedPoints, int w, int h,  double& k1, double& k2, Imagine::Matrix<double>& H, int n_points, int n_iterations=5, double lambda=1000, double mu=1000, double epsilon_k1=pow(10,-10), double epsilon_k2=pow(10,-20), double epsilon_h=0.1);
 void MakeNewImage2(Imagine::Image<Imagine::Color> Img1, Imagine::Image<Imagine::Color> Img2, Imagine::Matrix<double> H, int w1, int h1, int w2, int h2, double k1, double k2);
 Imagine::FMatrix<double,2,1>  Deformation(Imagine::FMatrix<double,2,1>   p, int w, int h,double k1, double k2);
 Imagine::FMatrix<double,1,2> Transpose(Imagine::FMatrix<double,2,1> M);

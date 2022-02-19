@@ -255,38 +255,63 @@ double Energy(Imagine::IntPoint2* SelectedPoints, Imagine::IntPoint2* Deformatio
     return dist + lambda * pow(k1,2) + mu * pow(k2,2);
 }
 
-void GradientDescent(Imagine::IntPoint2* SelectedPoints, int w, int h,  double& k1, double& k2, Imagine::Matrix<double>& H, int n_points, double lambda, double mu, double epsilon, int n_iterations, double speed){
-    double k1_prime = k1;
-    double k2_prime = k2;
-    Imagine::Matrix<double> H_prime = H;
-
+void GradientDescent(Imagine::IntPoint2* SelectedPoints, int w, int h,  double& k1, double& k2, Imagine::Matrix<double>& H, int n_points, int n_iterations, double lambda, double mu, double epsilon_k1, double epsilon_k2, double epsilon_h){
     Imagine::IntPoint2* Deformation_Points_1 = new Imagine::IntPoint2[n_points];
     for(int i = 0; i < n_points; i++)
         Deformation_Points_1[i] = SelectedPoints[2*i];
-    Imagine::IntPoint2* Deformation_Cancel_1= new Imagine::IntPoint2[n_points];
+    Imagine::IntPoint2* Deformation_Cancel_1 = new Imagine::IntPoint2[n_points];
+
+    std::cout << "Energy : " << Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H,n_points) << std::endl;
+
+    double speed;
     int n = 0;
     while(n < n_iterations){
         n += 1;
+
+        std::cout << "k1 : " << k1 << std::endl;
+        std::cout << "k2 : " << k2 << std::endl;
+
         for(int i=0;i<n_points;i++)
             Deformation_Cancel_1[i] = InverseDeformationQuasiNewton(Deformation_Points_1[i],k1,k2,w,h);
 
-        k1_prime = k1;
-        k2_prime = k2;
-        H_prime = H;
+        double k1_prime = k1;
+        Imagine::Matrix<double> H_prime(3,3);
+        for(int i=0;i<3;i++){
+            for(int j=0;j<3;j++)
+                H_prime(i,j) = H(i,j);
+        }
 
-        k1 -= speed*(Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1+epsilon,k2,H,n_points) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H,n_points))/epsilon;
-        k2 -= speed*(Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2+epsilon,H,n_points) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H,n_points))/epsilon;
-        std::cout << k1 <<std::endl;
-        Imagine::Matrix<double> H_epsilon = H;
-            for(int i=0;i<3;i++){
-                for(int j=0;j<2;j++){
-                    H_epsilon(i,j) += epsilon;
-                    H(i,j) -= speed*(Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H_epsilon,n_points) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H_prime,n_points))/epsilon;
-                    H_epsilon(i,j) -= epsilon;
-                }
+        Imagine::Matrix<double> H_epsilon(3,3);
+        for(int i=0;i<3;i++){
+            for(int j=0;j<3;j++)
+                H_epsilon(i,j) = H(i,j);
+        }
+
+        for(int i=0;i<3;i++){
+            for(int j=0;j<2;j++){
+                H_epsilon(i,j) += epsilon_h;
+                speed = pow(10,-6);
+                while(abs(speed*(Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H_epsilon,n_points) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H_prime,n_points))/epsilon_h) > abs(0.1*H(i,j)))
+                    speed /= 10;
+                H(i,j) -= speed*(Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H_epsilon,n_points) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H_prime,n_points))/epsilon_h;
+                H_epsilon(i,j) -= epsilon_h;
             }
         }
-    };
+
+        std::cout << "H" << H << std::endl;
+
+        speed = pow(10,-6);
+        while(abs(speed*(Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1+epsilon_k1,k2,H_prime,n_points) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H_prime,n_points))/epsilon_k1) > abs(0.1*k1))
+            speed /= 10;
+        k1 -= speed*(Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1+epsilon_k1,k2,H_prime,n_points) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H_prime,n_points))/epsilon_k1;
+
+        speed = pow(10,-6);
+        while(abs(speed*(Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1_prime,k2+epsilon_k2,H_prime,n_points) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1_prime,k2,H_prime,n_points))/epsilon_k2) > abs(0.1*k2))
+            speed /= 10;
+        k2 -= speed*(Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1_prime,k2+epsilon_k2,H_prime,n_points) - Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1_prime,k2,H_prime,n_points))/epsilon_k2;
+    }
+    std::cout << "Energy : " << Energy(SelectedPoints,Deformation_Cancel_1,w,h,lambda,mu,k1,k2,H,n_points) << std::endl;
+}
 
 
 void MakeNewImage2(Imagine::Image<Imagine::Color> Img1, Imagine::Image<Imagine::Color> Img2, Imagine::Matrix<double> H, int w1, int h1, int w2, int h2, double k1, double k2){
@@ -316,4 +341,4 @@ void MakeNewImage2(Imagine::Image<Imagine::Color> Img1, Imagine::Image<Imagine::
 
     Imagine::Window W = Imagine::openWindow(w,h);
     DisplayImage(NewImage,W,w,h);
-};
+}

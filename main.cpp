@@ -16,8 +16,6 @@ const char* default_color_image_file1=srcPath("/left.png");
 const char* default_color_image_file2=srcPath("/right.png");
 
 int main() {
-
-
     int w1,h1,w2,h2;
     Imagine::Image<Imagine::Color> Img1 = LoadImage(default_color_image_file1, w1, h1);
     Imagine::Image<Imagine::Color> Img2 = LoadImage(default_color_image_file2, w2, h2);
@@ -28,27 +26,22 @@ int main() {
     Window W2 = openWindow(w2,h2);
     DisplayImage(Img2,W2,w2,h2);
 
-
-    //Version without deformation
-    /*
-    IntPoint2* Selection = SelectPoints(W1,W2);
-    Matrix<double> H = FindHomography(Selection);
-
-    MakeNewImage(Img1,Img2,H,w1,h1,w2,h2);
-    endGraphics();*/
-
-
-    // Version with deformation
     IntPoint2* Selection = SelectPoints(W1,W2,8);
-    Matrix<double> H(3,3);
-    H(2,2) = 1;
+    IntPoint2 Selection_homography[4];
+    for(int i=0;i<4;i++)
+        Selection_homography[i] = Selection[i];
+    Matrix<double> H = FindHomography(Selection_homography);
+
+    cout << H << endl;
+
     double k1,k2;
-    k1 = 1;
-    k2 = 1;
-    GradientDescent(Selection, w1, h1, k1, k2, H,8);
+    k1 = pow(10,-10);
+    k2 = pow(10,-20);
+    GradientDescent(Selection, w1,h1,k1,k2,H,8);
     cout << k1 << " et " << k2 << endl;
     cout << H;
     MakeNewImage2(Img1,Img2,H,w1,h1,w2,h2,k1,k2);
+
     /*Imagine::FMatrix<double,2,1>   p;
     p[0] = 100;
     p[1] = 150;
@@ -59,7 +52,6 @@ int main() {
     Imagine::IntPoint2 m = InverseDeformationQuasiNewton(dp,pow(10,-11), pow(10,-11), 500, 500);
     cout << dp<< endl;
     cout << m << endl;*/
-
     return 0;
 }
 
