@@ -24,3 +24,6 @@ Imagine::FMatrix<float,1,2> Transpose(Imagine::FMatrix<float,2,1> M);
 Imagine::IntPoint2* NoDeformationImage(int w, int h, float k1, float k2);
 Imagine::IntPoint2 InverseDeformationQuasiNewton(Imagine::IntPoint2 p, float k1, float k2, int w, int h,float epsilon = 0.01);
 
+
+Imagine::Image<Imagine::Color> DistorsionCorrection(Imagine::Image<Imagine::Color> Img, int w, int h,double k1, double k2);
+Imagine::Image<Imagine::Color> ApplyDistorsion(Imagine::Image<Imagine::Color> Img, int w, int h,double k1, double k2);
