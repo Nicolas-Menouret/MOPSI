@@ -340,3 +340,31 @@ void MakeNewImage2(Imagine::Image<Imagine::Color> Img1, Imagine::Image<Imagine::
     Imagine::Window W = Imagine::openWindow(w,h);
     DisplayImage(NewImage,W,w,h);
 }
+
+Imagine::Image<Imagine::Color> DistorsionCorrection(Imagine::Image<Imagine::Color> Img, int w, int h,double k1, double k2){
+    Imagine::Image<Imagine::Color> CorrectedImage(w,h);
+    for(int x=0;x<w;x++){
+        for(int y=0;y<h;y++){
+            Imagine::IntPoint2 p(x,y);
+            Imagine::IntPoint2 CorrectedPixel = InverseDeformationQuasiNewton(p,k1,k2,w,h);
+
+            if (CorrectedPixel[0]>=0 and CorrectedPixel[0]<w and CorrectedPixel[1] >= 0 and CorrectedPixel[1]<h)
+                CorrectedImage(CorrectedPixel[0],CorrectedPixel[1]) = Img(x,y);
+        }
+    }
+    return CorrectedImage;
+}
+
+Imagine::Image<Imagine::Color> ApplyDistorsion(Imagine::Image<Imagine::Color> Img, int w, int h,double k1, double k2){
+    Imagine::Image<Imagine::Color> DeformedImage(w,h);
+    for(int x=0;x<w;x++){
+        for(int y=0;y<h;y++){
+            Imagine::IntPoint2 p(x,y);
+            Imagine::IntPoint2 DeformedPixel = DeformationPixel(p,w,h,k1,k2);
+            //std::cout << DeformedPixel << std::endl;
+            if (DeformedPixel [0]>=0 and DeformedPixel[0]<w and DeformedPixel[1] >= 0 and DeformedPixel[1]<h)
+                DeformedImage(DeformedPixel[0],DeformedPixel[1]) = Img(x,y);
+        }
+    }
+    return DeformedImage;
+}
