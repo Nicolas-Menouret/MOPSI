@@ -174,6 +174,20 @@ Imagine::FMatrix<float,2,1>  Deformation(Imagine::FMatrix<float,2,1> p, int w, i
     return p_deformed;
 }
 
+Imagine::IntPoint2 DeformationPixel(Imagine::IntPoint2 p, int w, int h,double k1, double k2){
+    Imagine::FMatrix<int,2,1>  p_deformed;
+    Imagine::FMatrix<double,2,1>  p_base;
+    p_base[0] = p[0];
+    p_base[1] = p[1];
+    Imagine::FMatrix<double,2,1>  c;
+    c[0] = w/2;
+    c[1] = h/2;
+    double Factor = (1 + k1 * pow(Radius(p[0],p[1],w/2,h/2),2) + k2 * pow(Radius(p[0],p[1],w/2,h/2),4));
+    p_deformed = Factor*(p_base-c) + c;
+    Imagine::IntPoint2 p_distor(p_deformed(0,0),p_deformed(1,0));
+    return p_distor;
+}
+
 Imagine::FMatrix<float,1,2> Transpose(Imagine::FMatrix<float,2,1> M){
     Imagine::FMatrix<float,1,2> T;
     T[0] = M[0];
