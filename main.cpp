@@ -20,38 +20,28 @@ int main() {
     Imagine::Image<Imagine::Color> Img1 = LoadImage(default_color_image_file1, w1, h1);
     Imagine::Image<Imagine::Color> Img2 = LoadImage(default_color_image_file2, w2, h2);
 
-    Window W1 = openWindow(w1,h1);
-    DisplayImage(Img1,W1,w1,h1);
+//    Window W1 = openWindow(w1,h1);
+//    DisplayImage(Img1,W1,w1,h1);
 
-    Window W2 = openWindow(w2,h2);
-    DisplayImage(Img2,W2,w2,h2);
+//    Window W2 = openWindow(w2,h2);
+//    DisplayImage(Img2,W2,w2,h2);
 
-    IntPoint2* Selection = SelectPoints(W1,W2,8);
-    IntPoint2 Selection_homography[4];
-    for(int i=0;i<4;i++)
+    IntPoint2 Selection[16] = {IntPoint2(361,272),IntPoint2(262,284),IntPoint2(352,265),IntPoint2(254,278),IntPoint2(369,281),IntPoint2(14,281),IntPoint2(371,451),IntPoint2(16,451),IntPoint2(371,327),IntPoint2(17,327),IntPoint2(373,133),IntPoint2(18,133),IntPoint2(375,290),IntPoint2(20,290),IntPoint2(380,343),IntPoint2(25,343)};
+    IntPoint2 Selection_homography[8];
+    for(int i=0;i<7;i++)
         Selection_homography[i] = Selection[i];
-    Matrix<double> H = FindHomography(Selection_homography);
+    Matrix<float> H = FindHomography(Selection_homography);
 
     cout << H << endl;
+    float k1,k2;
+    k1 = 5*pow(10,-7);
+    k2 = 0;
 
-    double k1,k2;
-    k1 = pow(10,-10);
-    k2 = pow(10,-20);
-    GradientDescent(Selection, w1,h1,k1,k2,H,8);
+    GradientDescent(Selection,w1,h1,k1,k2,H,8);
     cout << k1 << " et " << k2 << endl;
     cout << H;
     MakeNewImage2(Img1,Img2,H,w1,h1,w2,h2,k1,k2);
 
-    /*Imagine::FMatrix<double,2,1>   p;
-    p[0] = 100;
-    p[1] = 150;
-    Imagine::FMatrix<int,2,1> d = Deformation(p, 500, 500,pow(10,-11), pow(10,-11));
-    Imagine::IntPoint2 dp;
-    dp[0] = d[0];
-    dp[1] = d[1];
-    Imagine::IntPoint2 m = InverseDeformationQuasiNewton(dp,pow(10,-11), pow(10,-11), 500, 500);
-    cout << dp<< endl;
-    cout << m << endl;*/
     return 0;
 }
 
